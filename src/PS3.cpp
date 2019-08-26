@@ -57,7 +57,7 @@ int main (int argc, const char * argv[])
     }
 
     //Resizing the front image.
-    std::cout << "Main image size:Width : " << mainImage.size().width << "\n" << "Height: " << mainImage.size().height << "\nLayered image size:" << "\nWidth : " << layeredImage.size().width << "\nHeight: " << layeredImage.size().height << std::endl;
+    std::cout << "Main image size:\nWidth : " << mainImage.size().width << "\n" << "Height: " << mainImage.size().height << "\nLayered image size:" << "\nWidth : " << layeredImage.size().width << "\nHeight: " << layeredImage.size().height << std::endl;
     
 //    cv::split(layeredImage, bgra);
 //    std::vector<cv::Mat> channels = {bgra[0], bgra[1], bgra[2]};
