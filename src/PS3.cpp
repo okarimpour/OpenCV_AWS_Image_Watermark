@@ -1,8 +1,3 @@
-/*
- *      Project: Overlayered Project
- *      Author: Omid Karimpour
- */
-
 #include <opencv2/opencv.hpp>
 #include <iostream>
 
@@ -14,14 +9,17 @@ inline bool failedToLoad(cv::Mat image) {
 }
 
 cv::Mat readImage(std::string fileName){
-    cv::Mat image = cv::imread(fileName);
+    cv::Mat image = cv::imread(fileName, cv::IMREAD_UNCHANGED);
     if (failedToLoad(image))
         throw "Image not found";
     return image;
 }
 
-void writeImage(std::string fileName, cv::Mat newImage){
-    cv::imwrite(fileName, newImage);
+cv::Mat writeImage(std::string fileName, cv::Mat newImage){
+    imwrite(fileName, newImage);
+    if (failedToLoad(newImage))
+        throw "Could not write the image";
+    return newImage;
 }
 
 void showImage(cv::Mat newFrontImage, std::string label){
@@ -31,17 +29,23 @@ void showImage(cv::Mat newFrontImage, std::string label){
     cv::destroyAllWindows();
 }
 
+cv::Mat resizingImage(cv::Mat originalImage, cv::Mat resizedImage, cv::Mat backgroundImage){
+    cv::resize(originalImage, resizedImage, backgroundImage.size());
+    if (failedToLoad(resizedImage))
+        throw "Could not resize";
+    return resizedImage;
+}
+
 int main (int argc, const char * argv[])
 {
-    cv::Mat mainImage;
-    cv::Mat layeredImage;
+    cv::Mat mainImage, layeredImage, newLayeredImage, newMainImage;
     static_cast<void>(argc);
     static_cast<void>(argv);
     
     //Reading the image
     try{
         mainImage = readImage("/Users/omidkarimpour/Desktop/ComputerVision/secondClass/input/mainImage.jpg");
-        layeredImage = readImage("/Users/omidkarimpour/Desktop/ComputerVision/secondClass/input/layeredImage.jpg");
+        layeredImage = readImage("/Users/omidkarimpour/Desktop/ComputerVision/secondClass/input/layeredImage.png");
     }
     catch(const cv::Exception & e){
         std::cerr << e.what() << std::endl;
@@ -54,38 +58,58 @@ int main (int argc, const char * argv[])
 
     //Resizing the front image.
     std::cout << "Main image size:\nWidth : " << mainImage.size().width << "\n" << "Height: " << mainImage.size().height << "\nLayered image size:" << "\nWidth : " << layeredImage.size().width << "\nHeight: " << layeredImage.size().height << std::endl;
-
-    cv::Mat newLayeredImage;
     
-    cv::resize(layeredImage, newLayeredImage, mainImage.size());
+//    cv::split(layeredImage, bgra);
+//    std::vector<cv::Mat> channels = {bgra[0], bgra[1], bgra[2]};
+//    cv::merge(channels, rgbImage);
+//    showImage(rgbImage, "layeredImage");
     
-    //Writing the image
+    cv::cvtColor(mainImage, newMainImage, cv::COLOR_RGB2RGBA, 4);
+    
     try{
-        writeImage("/Users/omidkarimpour/Desktop/ComputerVision/secondClass/output/new_layeredImage.jpg", newLayeredImage);
+        resizingImage(layeredImage, newLayeredImage, newMainImage);
     }
     catch(const cv::Exception & e){
         std::cerr << e.what() << std::endl;
         return -1;
     }
+    catch (const char* error){
+        std::cerr << error << std::endl;
+        return -1;
+    }
+    cv::resize(layeredImage, newLayeredImage, mainImage.size());
     
+    //Writing the image
+    try{
+        writeImage("/Users/omidkarimpour/Desktop/ComputerVision/secondClass/output/newLayeredImage.png", newLayeredImage);
+    }
+    catch(const cv::Exception & e){
+        std::cerr << e.what() << std::endl;
+        return -1;
+    }
+    catch (const char* error){
+        std::cerr << error << std::endl;
+        return -1;
+    }
+
     //Showing the image
     showImage(newLayeredImage, "newLayeredImage");
 
     //overlayer
     cv::Mat finalImage;
-    double alpha = 0.8;
+    double alpha = 0.5;
     double beta = 1 - alpha;
-    cv::addWeighted(mainImage, alpha, newLayeredImage, beta, 0.0,finalImage);
-    
+    cv::addWeighted(newMainImage, alpha, newLayeredImage, beta, 0.0,finalImage);
+
     //Writing the result
     try{
-        writeImage("/Users/omidkarimpour/Desktop/ComputerVision/secondClass/output/finalImage.jpg", finalImage);
+        writeImage("/Users/omidkarimpour/Desktop/ComputerVision/secondClass/output/finalImage.png", finalImage);
     }
     catch(const cv::Exception & e){
         std::cerr << e.what() << std::endl;
         return -1;
     }
-    
+
     //Writing the result
     showImage(finalImage, "finalImage");
     
