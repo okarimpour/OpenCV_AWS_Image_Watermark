@@ -1,135 +1,156 @@
 /*
  //OpenCV images overlayed project by Omid Karimpour
 */
+#include <iostream>
+#include <cassert>
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-#include <iostream>
 
-inline bool failedToLoad(cv::Mat image) {
-    if(image.empty() || 0 == image.size().width || 0 == image.size().height){
-        return true;
-    }
-    return false;
+bool failedToLoad(const cv::Mat image){
+    return image.empty() || 0 == image.size().width || 0 == image.size().height;
 }
 
-cv::Mat readImage(std::string fileName){
+bool isEmpty(const cv::Mat image){
+    return failedToLoad(image);
+}
+
+cv::Mat readImage(const std::string fileName){
     cv::Mat image = cv::imread(fileName, cv::IMREAD_UNCHANGED);
-    if (failedToLoad(image))
+    if (failedToLoad(image)){
         throw "Image not found";
+    }
     return image;
 }
 
-void resizingImage(cv::Mat originalImage, cv::Mat &resizedImage, cv::Mat backgroundImage, double Factor){
-    cv::resize(originalImage, resizedImage, cv::Size(backgroundImage.cols*Factor, backgroundImage.cols*Factor* (originalImage.rows/originalImage.cols)), 0, 0, cv::INTER_AREA);
+cv::Mat resizingImage(const cv::Mat originalImage, const cv::Mat backgroundImage, const double Factor){
+    cv::Mat resizedImage;
+    
+    const auto originalAspectRatio = static_cast<double>(originalImage.rows) / originalImage.cols;
+    
+    const auto widthFactor = Factor * originalAspectRatio;
+    
+    cv::resize(
+               originalImage,
+               resizedImage,
+               cv::Size(), // do nothing on Size, take Scale
+               Factor,
+               widthFactor,
+               cv::INTER_AREA
+    );
+    
     if (failedToLoad(resizedImage))
         throw "Could not resize";
+    
+    return resizedImage;
 }
 
-void writeImage(std::string fileName, cv::Mat newImage){
+void writeImage(const std::string fileName, const cv::Mat newImage){
     cv::imwrite(fileName, newImage);
     if (failedToLoad(newImage))
         throw "Could not write the image";
 }
 
-void showImage(cv::Mat newFrontImage, std::string label){
+void showImage(cv::Mat newFrontImage, const std::string label){
     cv::namedWindow(label, cv::WINDOW_AUTOSIZE);
     cv::imshow(label, newFrontImage);
     cv::waitKey();
     cv::destroyAllWindows();
 }
 
-int tryCatch(std::string name, cv::Mat image, void (*func)(std::string, cv::Mat)){
-    try{
-        (*func)(name, image);
-    }
-    catch(const cv::Exception & e){
-        std::cerr << e.what() << std::endl;
-        return -1;
-    }
-    catch (const char* error){
-        std::cerr << error << std::endl;
-        return -1;
-    }
-    return 0;
-}
-
-bool readTryCatch(std::string name, cv::Mat& image, cv::Mat (*func)(std::string)){
-    try{
-         image = (*func)(name);
-    }
-    catch(const cv::Exception & e){
-        std::cerr << e.what() << std::endl;
-        return false;
-    }
-    catch (const char* error){
-        std::cerr << error << std::endl;
-        return false;
-    }
-    return true;
-}
-
-void printSize(std::string name, cv::Mat image){
+void printSize(const std::string name, const cv::Mat image){
     std::cout << name << " image size:\nWidth : " << image.size().width << "\nHeight: " << image.size().height << std::endl;
 }
 
-void overlayImage(cv::Mat &background, cv::Mat &foreground, cv::Mat &finalImage, cv::Point2i location){
+// location is a point on background, that defines the top left pixel of foreground
+cv::Mat overlayImage(const cv::Mat background, const cv::Mat foreground, const cv::Point2i location){
     
-    cv::Mat rgba[4];
-    background.copyTo(finalImage);
+    cv::Mat finalImage(background);
     
-    for(int rows = std::max(location.y, 0); rows < background.rows; ++rows)
-    {
-        int foregroundY = rows - location.y;
-        
-        if(foregroundY >= foreground.rows)
-            break;
-        
-        for(int cols = std::max(location.x, 0); cols < background.cols; ++cols){
-            int foregroundX = cols - location.x;
+    auto maxLocationX = location.x + foreground.cols;
+    auto maxLocationY = location.y + foreground.rows;
+    float maxAlpha = 255;
+    
+    if (maxLocationX > background.cols || maxLocationY > background.rows){
+        throw "location is out of bound";
+    }
+    
+    if (location.x > 0 || location.y > 0){
+        throw "location has negative value";
+    }
+    
+    for(int row = location.y; row <= maxLocationY; row++){
+        int foregroundY = row - location.y;
+
+        for(int col = location.x; col <= maxLocationX; col++){
+            int foregroundX = col - location.x;
             
-            if(foregroundX >= foreground.cols)
-                break;
+            auto rgba = foreground.at<cv::Vec4b>(foregroundY, foregroundX);
+            auto alpha = rgba[3] / maxAlpha;
+            auto beta = 1 - alpha;
             
-            if(foreground.at<cv::Vec4b>(foregroundY, foregroundX)[3] == 255 && foreground.at<cv::Vec4b>(foregroundY, foregroundX)[0] != 255 && foreground.at<cv::Vec4b>(foregroundY, foregroundX)[1] != 255 && foreground.at<cv::Vec4b>(foregroundY, foregroundX)[2] != 255){
-                finalImage.at<cv::Vec3b>(rows, cols)[0] = foreground.at<cv::Vec4b>(foregroundY, foregroundX)[0];
-                finalImage.at<cv::Vec3b>(rows, cols)[1] = foreground.at<cv::Vec4b>(foregroundY, foregroundX)[1];
-                finalImage.at<cv::Vec3b>(rows, cols)[2] = foreground.at<cv::Vec4b>(foregroundY, foregroundX)[2];
+            for( auto pixelChannel = 0; pixelChannel < 3; pixelChannel++){
+                finalImage.at<cv::Vec3b>(row, col)[pixelChannel] *= beta;
+                finalImage.at<cv::Vec3b>(row, col)[pixelChannel] += alpha * rgba[pixelChannel];
             }
         }
     }
+    
+    return finalImage;
 }
 
 int main (int argc, const char * argv[])
 {
-    cv::Mat mainImage, layeredImage, newLayeredImage, newMainImage, finalImage;
+    // to suppress -Wunsued-variable
     static_cast<void>(argc);
     static_cast<void>(argv);
     
-    if (readTryCatch("/Users/omidkarimpour/Desktop/openCV_Project/input/mainImage.jpg", mainImage, readImage) == false){return -1;}
-    if(readTryCatch("/Users/omidkarimpour/Desktop/openCV_Project/input/layeredImage.png", layeredImage, readImage) == false){return -1;}
+    const auto mainImageFileName = "/Users/omidkarimpour/Desktop/openCV_Project/input/mainImage.jpg";
+    const auto layeredImageFileName = "/Users/omidkarimpour/Desktop/openCV_Project/input/layeredImage.png";
+    
+    const auto newLayeredImageFileName = "/Users/omidkarimpour/Desktop/openCV_Project/output/newLayeredImage.png";
+    const auto finalImagefileName = "/Users/omidkarimpour/Desktop/openCV_Project/output/finalImage.png";
 
-    printSize("main", mainImage);
-    printSize("layered", layeredImage);
     
-    cv::cvtColor(mainImage, newMainImage, cv::COLOR_RGB2RGBA, 4);
-    
-    if(layeredImage.size >= newMainImage.size){
-        resizingImage(layeredImage, newLayeredImage, newMainImage, 0.2);
-        overlayImage(newMainImage, newLayeredImage, finalImage, cv::Point(0, 0));
-    } else{
-        //upsample(Lateron)
-        resizingImage(layeredImage, newLayeredImage, newMainImage, 0.2);
-        overlayImage(newMainImage, newLayeredImage, finalImage, cv::Point(0, 0));
-    }
-    
-    printSize("new layered", newLayeredImage);
-    tryCatch("/Users/omidkarimpour/Desktop/openCV_Project/output/newLayeredImage.png", newLayeredImage, writeImage);
-    tryCatch("/Users/omidkarimpour/Desktop/openCV_Project/output/finalImage.png", finalImage, writeImage);
-    showImage(newLayeredImage, "newLayeredImage");
-    showImage(finalImage, "finalImage");
+    try {
+        auto mainImage = readImage(mainImageFileName);
+        auto layeredImage = readImage(layeredImageFileName);
         
-    return 0;
+        printSize("main", mainImage);
+        printSize("layered", layeredImage);
+        
+        // TODO: compare pixel real-estate
+//        if(layeredImage.size >= newMainImage.size){
+//            auto newLayeredImage = resizingImage(layeredImage, newLayeredImage, newMainImage, 0.2);
+//            auto finalImage = overlayImage(newMainImage, newLayeredImage, cv::Point(0, 0));
+//        } else{
+//            //upsample(Lateron)
+//        }
+
+        auto newLayeredImage = resizingImage(layeredImage, mainImage, 0.2);
+        auto finalImage = overlayImage(mainImage, newLayeredImage, cv::Point(0, 0));
+        
+        printSize("new layered", newLayeredImage);
+        
+        writeImage(newLayeredImageFileName, newLayeredImage);
+        writeImage(finalImagefileName, finalImage);
+        
+        
+        showImage(newLayeredImage, "newLayeredImage");
+        showImage(finalImage, "finalImage");
+        
+        
+    } catch(const std::exception& ex){
+        // show what you caught
+        std::cerr << "Exception Raised: " << ex.what() << std::endl;
+        return EXIT_FAILURE;
+    } catch(const char* message){
+        std::cerr << "Exception Thrown: " << message << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+    
 }
 
         
@@ -146,3 +167,38 @@ int main (int argc, const char * argv[])
         //    cv::cvtColor(mainImage, newMainImage, cv::COLOR_RGB2RGBA, 4);
         //    resizingImage(layeredImage, newLayeredImage, newMainImage, 0.1, 0.1);
         //    newLayeredImage.copyTo(newMainImage(cv::Rect(0, 0, newLayeredImage.cols, newLayeredImage.rows)));
+
+        //cv::cvtColor(mainImage, newMainImage, cv::COLOR_RGB2RGBA, 4);
+
+        //int tryCatch(std::string name, cv::Mat image, void (*func)(std::string, cv::Mat)){
+        //    try{
+        //        (*func)(name, image);
+        //    }
+        //    catch(const cv::Exception & e){
+        //        std::cerr << e.what() << std::endl;
+        //        return -1;
+        //    }
+        //    catch (const char* error){
+        //        std::cerr << error << std::endl;
+        //        return -1;
+        //    }
+        //    return 0;
+        //}
+
+        //bool readTryCatch(std::string name, cv::Mat& image, cv::Mat (*func)(std::string)){
+        //    try{
+        //         image = (*func)(name);
+        //    }
+        //    catch(const cv::Exception & e){
+        //        std::cerr << e.what() << std::endl;
+        //        return false;
+        //    }
+        //    catch (const char* error){
+        //        std::cerr << error << std::endl;
+        //        return false;
+        //    }
+        //    return true;
+        //}
+
+        //std::pair<>
+        //std::tuple<>
