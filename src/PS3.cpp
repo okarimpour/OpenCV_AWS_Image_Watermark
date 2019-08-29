@@ -2,7 +2,6 @@
  //OpenCV images overlayed project by Omid Karimpour
 */
 #include <iostream>
-#include <cassert>
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -118,14 +117,6 @@ int main (int argc, const char * argv[])
         
         printSize("main", mainImage);
         printSize("layered", layeredImage);
-        
-        // TODO: compare pixel real-estate
-//        if(layeredImage.size >= newMainImage.size){
-//            auto newLayeredImage = resizingImage(layeredImage, newLayeredImage, newMainImage, 0.2);
-//            auto finalImage = overlayImage(newMainImage, newLayeredImage, cv::Point(0, 0));
-//        } else{
-//            //upsample(Lateron)
-//        }
 
         auto newLayeredImage = resizingImage(layeredImage, mainImage, 0.2);
         auto finalImage = overlayImage(mainImage, newLayeredImage, cv::Point(0, 0));
@@ -152,53 +143,3 @@ int main (int argc, const char * argv[])
     return EXIT_SUCCESS;
     
 }
-
-        
-        
-        //    cv::split(layeredImage, bgra);
-        //    std::vector<cv::Mat> channels = {bgra[0], bgra[1], bgra[2]};
-        //    cv::merge(channels, rgbImage);
-        //    showImage(rgbImage, "layeredImage");
-        //    //overlayer
-        //    cv::Mat finalImage;
-        //    double alpha = 0.5;
-        //    double beta = 1 - alpha;
-        //    cv::addWeighted(newMainImage, alpha, newLayeredImage, beta, 0.0,finalImage);
-        //    cv::cvtColor(mainImage, newMainImage, cv::COLOR_RGB2RGBA, 4);
-        //    resizingImage(layeredImage, newLayeredImage, newMainImage, 0.1, 0.1);
-        //    newLayeredImage.copyTo(newMainImage(cv::Rect(0, 0, newLayeredImage.cols, newLayeredImage.rows)));
-
-        //cv::cvtColor(mainImage, newMainImage, cv::COLOR_RGB2RGBA, 4);
-
-        //int tryCatch(std::string name, cv::Mat image, void (*func)(std::string, cv::Mat)){
-        //    try{
-        //        (*func)(name, image);
-        //    }
-        //    catch(const cv::Exception & e){
-        //        std::cerr << e.what() << std::endl;
-        //        return -1;
-        //    }
-        //    catch (const char* error){
-        //        std::cerr << error << std::endl;
-        //        return -1;
-        //    }
-        //    return 0;
-        //}
-
-        //bool readTryCatch(std::string name, cv::Mat& image, cv::Mat (*func)(std::string)){
-        //    try{
-        //         image = (*func)(name);
-        //    }
-        //    catch(const cv::Exception & e){
-        //        std::cerr << e.what() << std::endl;
-        //        return false;
-        //    }
-        //    catch (const char* error){
-        //        std::cerr << error << std::endl;
-        //        return false;
-        //    }
-        //    return true;
-        //}
-
-        //std::pair<>
-        //std::tuple<>
