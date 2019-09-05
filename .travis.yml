@@ -27,7 +27,7 @@ install:
   - cd ../../
 
 script:
-  - cd OpenCV_Project/src/build
-  - cmake .
+  - cd src/build
+  - cmake ..
   - make
   - ./overlay
