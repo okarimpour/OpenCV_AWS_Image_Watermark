@@ -6,13 +6,6 @@ compiler:
   
 before_install:
   - sudo apt-get update
-  - wget http://www.cmake.org/files/v3.4/cmake-3.4.1.tar.gz
-  - tar -xvzf cmake-3.4.1.tar.gz
-  - cd cmake-3.4.1/
-  - ./configure
-  - make
-  - cd ..
-  - cmake --version
 
 install:
   - sudo apt-get install -y build-essential
@@ -34,7 +27,7 @@ install:
   - cd ../../
 
 script:
-  - cd [project_dir]
+  - cd OpenCV_Project/src/build
   - cmake .
   - make
-  - ./[application_name] [params]
+  - ./overlay
