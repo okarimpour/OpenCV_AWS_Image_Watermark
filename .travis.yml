@@ -27,7 +27,4 @@ install:
   - cd ../../
 
 script:
-  - cd src/build
-  - cmake ..
-  - make
-  - ./overlay
+  - cd src/ && mkdir build && cd build && cmake .. && make -j4 && ./overlay
