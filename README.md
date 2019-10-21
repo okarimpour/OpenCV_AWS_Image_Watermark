@@ -12,7 +12,7 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Prerequisites
 
-You need to install an amazon linux 2 or use a amazon EC2, and evidently have access to amazon S3, AWS Lambda. You can find the link below to get started with these serveces and sign up for free trial by amazon at [Getting started with aws](https://aws.amazon.com/getting-started/).
+You need to install an amazon linux 2 ([Running Amazon Linux 2 as a Virtual Machine On-Premises](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/amazon-linux-2-virtual-machine.html)) or use a amazon EC2, and evidently have access to amazon S3, AWS Lambda. You can find the link below to get started with these serveces and sign up for free trial by amazon at [Getting started with aws](https://aws.amazon.com/getting-started/).
 
 ### Installing
 
