@@ -10,11 +10,11 @@ int main (int argc, const char * argv[])
     static_cast<void>(argc);
     static_cast<void>(argv);
     
-    const auto mainImageFileName = "/Users/omidkarimpour/Desktop/Github/openCV_Project/input/mainImage.jpg";
-    const auto layeredImageFileName = "/Users/omidkarimpour/Desktop/Github/openCV_Project/input/layeredImage.png";
+    const auto mainImageFileName = "../../input/mainImage.jpg";
+    const auto layeredImageFileName = "../../input/layeredImage.png";
     
-    const auto newLayeredImageFileName = "/Users/omidkarimpour/Desktop/Github/openCV_Project/output/newLayeredImage.png";
-    const auto finalImagefileName = "/Users/omidkarimpour/Desktop/Github/openCV_Project/output/finalImage.png";
+    const auto newLayeredImageFileName = "../../output/newLayeredImage.png";
+    const auto finalImagefileName = "../../output/finalImage.png";
     
     try {
         auto mainImage = readImage(mainImageFileName);
