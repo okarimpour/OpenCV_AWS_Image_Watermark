@@ -31,9 +31,9 @@ int main (int argc, const char * argv[])
         writeImage(newLayeredImageFileName, newLayeredImage);
         writeImage(finalImagefileName, finalImage);
         
-        
-        showImage(newLayeredImage, "newLayeredImage");
-        showImage(finalImage, "finalImage");
+        //Uncomment following lines to show images
+        //showImage(newLayeredImage, "newLayeredImage");
+        //showImage(finalImage, "finalImage");
         
         
     } catch(const std::exception& ex){
